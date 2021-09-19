@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  
+  <link href="https://vjs.zencdn.net/7.10.2/video-js.min.css" rel="stylesheet">
+  <script src="https://vjs.zencdn.net/7.10.2/video.min.js"></script>
+  <!-- <script src="https://reference.dashif.org/dash.js/latest/dist/dash.all.debug.js"></script>
+  <script src="https://reference.dashif.org/dash.js/latest/dist/dash.mss.debug.js"></script>
+  <script src="https://unpkg.com/videojs-contrib-dash/dist/videojs-dash.js"></script> -->
+  <script>window.HELP_IMPROVE_VIDEOJS = false;</script>
+  
+</head>
+<body>
+  <center>
+    <div>VIDEO JS</div>
+    <br>
+    <div style="display: flex; width: 100%">
+      URL: &nbsp;
+      <!-- <input 
+        id="videoInput" 
+        style="flex: 1"
+        type="text" 
+        value="https://olivdemo-aase.streaming.media.azure.net/dda268f8-c16e-4736-b09e-2b31357d1060/big_buck_bunny_720p_2mb.ism/manifest"> -->
+      <!-- <input 
+        id="videoInput" 
+        style="flex: 1"
+        type="text" 
+        value="https://test.playready.microsoft.com/smoothstreaming/SSWSS720H264/SuperSpeedway_720.ism/manifest"> -->
+      <input 
+        id="videoInput" 
+        style="flex: 1"
+        type="text" 
+        value="https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8">
+    </div>
+
+    <br>
+    <div>
+      <label>
+        <input 
+          id="autoFormat" 
+          type="checkbox" 
+          >
+        <span>Auto Format (URL ending with /manifest)</span>
+      </label>
+    </div>
+    <br>
+
+    <div id="allowFormatsWrapper">
+      Allow Formats: 
+      <!-- <label>
+        <input 
+          id="formatSMOOTH" 
+          type="checkbox">
+        <span>SMOOTH</span>
+      </label> -->
+      <label>
+        <input 
+          id="formatDASH" 
+          type="checkbox" 
+          checked>
+        <span>DASH</span>
+      </label>
+      <label>
+        <input 
+          id="formatHLS" 
+          type="checkbox">
+        <span>HLS CMAF</span>
+      </label>
+      <label>
+        <input 
+          id="formatHLSV4" 
+          type="checkbox"
+          checked>
+        <span>HLS-V4</span>
+      </label>
+      <label>
+        <input 
+          id="formatHLSV3" 
+          type="checkbox">
+        <span>HLS-V3</span>
+      </label>
+    </div>
+
+    <div id="videoTypeWrapper">
+      Specific Format: 
+      <input 
+        name="videoType" 
+        type="radio"
+        value="application/dash+xml"
+      > Dash
+      <input 
+        name="videoType" 
+        type="radio"
+        value="application/x-mpegURL"
+        checked
+      > HLS
+    </div>
+
+    <br>
+    <div>
+      <span>Time: </span>
+      <span id="time"></span>
+    </div>
+
+    <br>
+    <div>
+      <span>Live Time: </span>
+      <span id="liveTime"></span>
+    </div>
+
+    <br>
+    <div>
+      <span>isLive: </span>
+      <span id="isLive"></span>
+    </div>
+
+    <br>
+    <div>
+      <button onclick="loadVideo()">Load</button>
+    </div>
+    <br>
+    
+    <video-js 
+      id="my_video_1" 
+      class="vjs-default-skin"
+      controls preload="auto" width="600">
+    </video-js>
+  </center>
+  
+  <script>
+    var videoJsPlayer = videojs('my_video_1', {
+      nativeControlsForTouch: false,
+      fullscreen: {
+        options: { navigationUI: 'hide' }
+      },
+      html5: {
+        vhs: {
+          overrideNative: true
+        },
+        nativeAudioTracks: false,
+        nativeVideoTracks: false
+      },
+      liveui: true,
+      controlBar: {
+        pictureInPictureToggle: !!window.document['pictureInPictureEnabled'] && !!('exitPictureInPicture' in document),
+      },
+    });
+
+    const timeElem = document.getElementById('time');
+    const liveTimeElem = document.getElementById('liveTime');
+    const isLiveElem = document.getElementById('isLive');
+
+    setInterval(function() {
+      timeElem.innerHTML = videoJsPlayer.currentTime();
+      liveTimeElem.innerHTML = videoJsPlayer.liveTracker && videoJsPlayer.liveTracker.liveCurrentTime();
+      isLiveElem.innerHTML = videoJsPlayer.liveTracker && videoJsPlayer.liveTracker.isLive();
+    }, 1000);
+    
+    var videoInput = document.getElementById('videoInput');
+    var autoFormat = document.getElementById('autoFormat');
+
+    var allowFormatsWrapper = document.getElementById('allowFormatsWrapper');
+    var videoTypeWrapper = document.getElementById('videoTypeWrapper');
+
+    autoFormat.addEventListener('change', function(event) {
+      autoFormatChange();
+    });
+
+    function autoFormatChange() {
+      if (autoFormat.checked) {
+        allowFormatsWrapper.style.display = 'block';
+        videoTypeWrapper.style.display = 'none';
+      } else {
+        allowFormatsWrapper.style.display = 'none';
+        videoTypeWrapper.style.display = 'block';
+      }
+    }
+
+    function loadVideo() {
+      var sources = [];
+
+      if (autoFormat.checked) {
+        // if (document.getElementById('formatSMOOTH').checked) {
+        //   sources.push({ src: videoInput.value, type: "application/dash+xml"});
+        // }
+        if (document.getElementById('formatDASH').checked) {
+          sources.push({ src: videoInput.value + '(format=mpd-time-csf)', type: "application/dash+xml" });
+        }
+        if (document.getElementById('formatHLS').checked) {
+          sources.push({ src: videoInput.value + '(format=m3u8-cmaf,audio-only=false)', type: "application/x-mpegURL" });
+        }
+        if (document.getElementById('formatHLSV4').checked) {
+          sources.push({ src: videoInput.value + '(format=m3u8-aapl,audio-only=false)', type: "application/x-mpegURL" });
+        }
+        if (document.getElementById('formatHLSV3').checked) {
+          sources.push({ src: videoInput.value + '(format=m3u8-aapl-v3,audio-only=false)', type: "application/x-mpegURL" });
+        }
+      } else {
+        sources.push({ src: videoInput.value, type:  document.querySelector('input[name="videoType"]:checked').value });
+      }
+
+      videoJsPlayer.src(sources);
+    }
+    
+    autoFormatChange();
+    loadVideo();
+  </script>
+</body>
+</html>
